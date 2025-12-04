@@ -1,5 +1,5 @@
 --05_potential_cases_demographics
---inputs: person, potential_cases
+--inputs: person, 02_potential_cases
 
 --obtain basic demographics, eds dx counts, and index date
 SELECT
@@ -11,6 +11,10 @@ SELECT
   p.gender_concept_id AS sex_concept_id,
   p.race_concept_id,
   p.data_partner_id
-FROM potential_cases AS pc
+FROM 02_potential_cases AS pc
 JOIN person AS p
   ON pc.person_id = p.person_id
+
+
+--output: columns: person_id, eds_dx_count, index_date, age, sex_concept_id, race_concept_id, data_partner
+--row: 22,839
