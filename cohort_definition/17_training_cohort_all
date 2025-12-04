@@ -1,0 +1,13 @@
+-- 17_training_cohort_all
+-- input: 13_stratified_train_val_split, 15_final_add_index
+
+-- obtain only training cohort and add labels
+SELECT s.*, m.index_date
+FROM 13_stratified_train_val_split s
+LEFT JOIN final_add_index_15 m
+  ON s.person_id = m.person_id
+WHERE s.split = 'train'
+
+
+-- output: column: person_id, age, sex_concept_id, race_concept_id, data_partner_id, cohort, distance, weights, subclass, rn, site_cohort_n, split, index_date
+-- output: row: 23,122
