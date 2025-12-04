@@ -1,0 +1,30 @@
+-- 09_propensity_matching_controls
+--input: 08_cases_add_controls
+-- lang: R 
+
+09_propensity_matching_controls <- function(08_cases_add_controls) {
+    df <-  (SparkR::collect(08_cases_add_controls))
+    # Define propensity score formula
+    matchit.formula <- as.formula("cohort ~ age + sex_concept_id + race_concept_id  + data_partner_id")
+    
+    # 1:1 nearest-neighbor propensity score matching without replacement
+    matched <- MatchIt::matchit(
+        formula = matchit.formula,
+        data = df,
+        method = "nearest",
+        distance = "glm",
+        ratio = 1
+    )
+    
+    # Extract matched dataset
+    matched_data <- MatchIt::match.data(matched)
+    
+    # Optional: print a summary of matching
+    print(summary(matched))
+    
+    return(matched_data)
+}
+
+
+--output: columns: person_id, age, sex_concept_id, race_concept_id, data_partner_id, cohort, distance, weights, subclass
+-- output: rows: 33,096
