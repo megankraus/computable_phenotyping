@@ -1,0 +1,18 @@
+--13_plot_frequency_distribution
+--input: intersection_set
+--lang: python
+
+
+# 3. Feature frequency distribution
+def plot_frequency_distribution(intersection_set):
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    df = intersection_set.toPandas()
+    plt.figure(figsize=(8,6))
+    sns.histplot(df["heds_freq"], bins=50, kde=False)
+    plt.xlabel("hEDS Frequency")
+    plt.ylabel("Count of Features")
+    plt.title("Distribution of Feature Frequencies in hEDS")
+    plt.show()
