@@ -1,0 +1,14 @@
+-- 07_High_freq_set
+-- input: 03_cond_feature_extraction 
+
+WITH high_freq AS (
+    SELECT *
+    FROM 03_Cond_feature_extraction
+    WHERE heds_freq >= 0.05
+)
+SELECT 'High Frequency' AS set_type, *
+FROM high_freq
+
+
+ --output: columns: set_type, concept_id, concept_name, heds_freq, control_freq, fold_change
+-- output: rows: 287
