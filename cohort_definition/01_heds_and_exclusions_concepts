@@ -1,0 +1,40 @@
+-- 01_heds_and_exclusions_concepts
+-- input: concept 
+-- Purpose: Create reusable lists of concept_ids for hEDS, unspecified EDS, excluded subtypes, and HSD.
+
+WITH hEDS_concepts AS (
+    SELECT concept_id
+    FROM concept
+    WHERE concept_id IN (
+        1553839, 4148925, -- Hypermobile EDS
+        45587483, 79145, 44822266, 40434987  -- EDS, unspecified
+    )
+),
+excluded_subtypes AS (
+    SELECT concept_id
+    FROM concept
+    WHERE concept_id IN (
+        37395762, 1553838, -- Classical EDS
+        1553840, 4062070, -- Vascular EDS
+        36674514         -- clEDS
+    )
+),
+hsd_concepts AS (
+    SELECT concept_id
+    FROM concept
+    WHERE concept_id IN (
+        44822224, 76790, 45601437, 35208838 -- concept_ids for Hypermobility Syndrome
+    )
+)
+
+SELECT
+    'hEDS' AS group_type, concept_id
+FROM hEDS_concepts
+UNION ALL
+SELECT
+    'exclude' AS group_type, concept_id
+FROM excluded_subtypes
+UNION ALL
+SELECT
+    'hsd' AS group_type, concept_id
+FROM hsd_concepts
