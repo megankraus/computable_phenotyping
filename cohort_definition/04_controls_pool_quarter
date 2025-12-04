@@ -1,0 +1,8 @@
+--04_controls_pool_quarter
+--input: controls_pool
+
+-- need to take random 25% for compute reasons
+SELECT *
+FROM controls_pool
+WHERE RANDOM() < 0.25  -- Keeps ~25% of the rows randomly
+    AND age >18
