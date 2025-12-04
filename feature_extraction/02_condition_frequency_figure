@@ -1,0 +1,28 @@
+-- 02_condition_frequency_figure
+-- input: 01_conditions_descriptive_terms 
+-- lang: python
+
+def condition_frequency_figure(01_conditions_descriptive_terms):
+    conditions_descriptive_terms = 01_conditions_descriptive_terms
+
+    import matplotlib.pyplot as plt
+
+    # Convert Spark DataFrame to pandas
+    df = conditions_descriptive_terms.toPandas()
+
+    # Sort by fold_change descending and take top 30
+    df = df.sort_values('fold_change', ascending=False).head(30).reset_index(drop=True)
+
+    # Plot horizontal bar chart of fold change
+    plt.figure(figsize=(10, 8))
+    plt.barh(df['concept_name'], df['fold_change'], color='tomato')
+    plt.xlabel('Fold Change (hEDS / Controls)')
+    plt.title('Top 30 Conditions Enriched in hEDS')
+    plt.gca().invert_yaxis()  # Highest fold change at top
+    plt.grid(True, axis='x', linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    plt.show()
+
+
+
+-- output: top 30 conditions enriched in hEDS by fold change
