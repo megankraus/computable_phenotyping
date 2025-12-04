@@ -1,4 +1,4 @@
--- 002_potential_cases
+-- 02_potential_cases
 -- input: condition_occurrences
 
 -- Step 1: Cases with ≥ 2 hEDS/unspecified EDS diagnoses and no excluded EDS codes
@@ -9,7 +9,7 @@ WITH filtered_conditions AS (
         co.condition_start_date,
         he.group_type
     FROM condition_occurrence co
-    JOIN hEDS_and_exclusions_concepts he
+    JOIN 01_hEDS_and_exclusions_concepts he
         ON co.condition_concept_id = he.concept_id
 )
 , cases_pre AS (
@@ -35,3 +35,6 @@ WITH filtered_conditions AS (
 )
 SELECT *
 FROM cases_final
+
+-- output: columns: person_id, eds_dx_count, index_date
+-- output: rows: 22,839
