@@ -1,0 +1,11 @@
+--06_cases_filtered
+--input: potential_cases_demographics
+
+-- inclusion criteria: 1 binary for cases, over age of 18, no missing sex or race information
+
+SELECT *,
+    1 as cohort
+FROM potential_cases_demographics
+WHERE age > 18
+    AND sex_concept_id <> 0
+    AND race_concept_id<> 0
