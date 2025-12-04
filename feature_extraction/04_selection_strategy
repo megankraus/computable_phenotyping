@@ -1,0 +1,31 @@
+-- 04_selection_strategy
+-- input: 03_cond_feature_extraction
+
+
+WITH stats AS (
+    SELECT
+        AVG(heds_freq) AS avg_heds_freq,
+        STDDEV(heds_freq) AS std_heds_freq,
+        AVG(control_freq) AS avg_control_freq,
+        STDDEV(control_freq) AS std_control_freq,
+        AVG(fold_change) AS avg_fc,
+        STDDEV(fold_change) AS std_fc
+    FROM 03_Cond_feature_extraction
+),
+standardized AS (
+    SELECT
+        concept_id,
+        concept_name,
+        (heds_freq - stats.avg_heds_freq) / NULLIF(stats.std_heds_freq, 0) AS zscore_heds_freq,
+        (control_freq - stats.avg_control_freq) / NULLIF(stats.std_control_freq, 0) AS zscore_control_freq,
+        (fold_change - stats.avg_fc) / NULLIF(stats.std_fc, 0) AS zscore_fold_change
+    FROM 03_Cond_feature_extraction
+    CROSS JOIN stats
+)
+SELECT *
+FROM standardized
+ORDER BY zscore_fold_change DESC
+
+
+-- output: colums: concept_id, concept_name, zscore_heds_freq, zscore_control_freq, zscore_fold_change
+-- output: rows: 12,325
