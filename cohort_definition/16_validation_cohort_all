@@ -1,0 +1,13 @@
+-- 16_validation_cohort_all
+-- inputs: 15_final_add_index, 13_stratified_train_val_split
+
+-- obtain only validation cohort and name as such 
+SELECT s.*, m.index_date
+FROM 13_stratified_train_val_split s
+LEFT JOIN final_add_index_15 m
+  ON s.person_id = m.person_id
+WHERE s.split = 'validation'
+
+
+-- output: column: person_id, age, sex_concept_id, race_concept_id, data_partner_id, cohort, distance, weights, subclass, rn, site_cohort_n, split, index_date
+-- output: row: 9,974
