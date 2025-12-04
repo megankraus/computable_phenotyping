@@ -9,4 +9,8 @@ SELECT
     race_concept_id, 
     data_partner_id, 
     cohort
-FROM cases_filtered
+FROM 06_cases_filtered
+
+
+--output: columns: person_id, age, sex_concept_id, race_concept_id, data_partner, cohort
+--output: row: 16,548
