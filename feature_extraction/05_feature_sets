@@ -1,0 +1,40 @@
+-- 05_feature_sets
+-- input: 03_cond_feature_extraction
+
+WITH high_fc AS (
+    SELECT *
+    FROM 03_Cond_feature_extraction
+    WHERE fold_change >= 2.0
+),
+high_freq AS (
+    SELECT *
+    FROM 03_Cond_feature_extraction
+    WHERE heds_freq >= 0.05
+),
+intersection_set AS (
+    SELECT *
+    FROM 03_Cond_feature_extraction
+    WHERE fold_change >= 2.0
+      AND heds_freq >= 0.05
+),
+union_set AS (
+    SELECT *
+    FROM 03_Cond_feature_extraction
+    WHERE fold_change >= 2.0
+       OR heds_freq >= 0.05
+)
+SELECT 'High Fold Change' AS set_type, *
+FROM high_fc
+UNION ALL
+SELECT 'High Frequency' AS set_type, *
+FROM high_freq
+UNION ALL
+SELECT 'Intersection' AS set_type, *
+FROM intersection_set
+UNION ALL
+SELECT 'Union' AS set_type, *
+FROM union_set
+
+
+-- output: columns: set_type, concept_id, concept_name, heds_freq, control_freq, fold_change 
+-- output: rows: 9,776
