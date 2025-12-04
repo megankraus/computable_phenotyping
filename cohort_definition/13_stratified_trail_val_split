@@ -1,0 +1,25 @@
+-- 13_stratified_trail_val_split
+--input: 09_propensity_matching_controls
+
+-- Node: stratified_train_val_split
+WITH ranked AS (
+    SELECT *,
+           ROW_NUMBER() OVER (
+               PARTITION BY data_partner_id, cohort   -- stratify by site and case/control
+               ORDER BY rand()
+           ) AS rn,
+           COUNT(*) OVER (
+               PARTITION BY data_partner_id, cohort
+           ) AS site_cohort_n
+    FROM propensity_matching_controls_09
+)
+SELECT *,
+       CASE 
+           WHEN rn <= site_cohort_n * 0.7 THEN 'train'
+           ELSE 'validation'
+       END AS split
+FROM ranked
+
+
+-- output: column: person_id, age, sex_concept_id, race_concept_id, data_partner_id, cohort, distance, weights, subclass, rn, site_cohort_n, split
+-- output: row: 33,096
