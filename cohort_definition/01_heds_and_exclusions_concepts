@@ -38,3 +38,9 @@ UNION ALL
 SELECT
     'hsd' AS group_type, concept_id
 FROM hsd_concepts
+
+
+
+
+
+--output: 2 columns, 15 rows (see file in google drive) 
