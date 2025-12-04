@@ -1,10 +1,10 @@
 --03_controls_pool
---input: person, condition_occurrence, hEDS_and_exclusions_contepts
+--input: person, condition_occurrence, 01_hEDS_and_exclusions_contepts
 
 -- Node: controls_pool
 WITH all_excluded_concepts AS (
     SELECT concept_id
-    FROM hEDS_and_exclusions_concepts
+    FROM 01_hEDS_and_exclusions_concepts
 ),
 controls AS (
     SELECT 
@@ -26,3 +26,7 @@ controls AS (
 )
 SELECT *
 FROM controls
+
+
+--output: columns: person_id, age, sex_concept_id, race_concept_id, data_partner, cohort
+--output: rows: 18,233,499
