@@ -3,9 +3,13 @@
 
 --join together cases and controls
 SELECT *
-FROM cases_prepped
+FROM 07_cases_prepped
 
 UNION ALL
 
 SELECT *
-FROM controls_pools_quarter
+FROM 04_controls_pools_quarter
+
+
+-- output: columns: person_id, age, sex_concept_id, race_concept_id, data_partner, cohort
+-- output: row: 3,690,226
