@@ -1,0 +1,11 @@
+-- 08_cases_add_controls
+-- input: 04_controls_pool_quarter, 07_cases_prepped
+
+--join together cases and controls
+SELECT *
+FROM cases_prepped
+
+UNION ALL
+
+SELECT *
+FROM controls_pools_quarter
