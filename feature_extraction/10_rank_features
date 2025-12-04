@@ -1,0 +1,13 @@
+-- 10_rank_features
+-- input: intersection_set
+
+
+-- Rank by fold_change, then by heds_freq
+SELECT *,
+       ROW_NUMBER() OVER (ORDER BY fold_change DESC) AS fold_rank,
+       ROW_NUMBER() OVER (ORDER BY heds_freq DESC) AS freq_rank
+FROM intersection_set
+
+
+Output: columns: concept_id, concept_name, heds_freq, control_freq, fold_change, combinded_score, fold_rank, freq_rank
+Output: rows: 231
