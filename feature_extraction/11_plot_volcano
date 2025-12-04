@@ -1,0 +1,53 @@
+--11_plot_volcano
+-- input: intersection_set 
+-- lang: python
+
+
+def plot_volcano(intersection_set, top_n_freq=10, top_n_fc=10):
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import pandas as pd
+
+    # Convert Spark → Pandas
+    df = intersection_set.toPandas()
+
+    # Ensure numeric
+    df["heds_freq"] = pd.to_numeric(df["heds_freq"], errors="coerce")
+    df["control_freq"] = pd.to_numeric(df["control_freq"], errors="coerce")
+    df["fold_change"] = pd.to_numeric(df["fold_change"], errors="coerce")
+
+    # Drop rows with missing values
+    df = df.dropna(subset=["heds_freq", "control_freq", "fold_change"])
+
+    # Calculate frequency difference
+    df["freq_diff"] = df["heds_freq"] - df["control_freq"]
+
+    plt.figure(figsize=(12,8))
+    sns.scatterplot(data=df, x="fold_change", y="freq_diff", alpha=0.7)
+
+    # Add vertical reference line
+    plt.axvline(2, color="red", linestyle="--", label="Fold Change=2")
+
+    # Label top-N by absolute freq_diff
+    topN_freq = df.loc[df["freq_diff"].abs().nlargest(top_n_freq).index]
+    for _, row in topN_freq.iterrows():
+        plt.text(
+            row["fold_change"], row["freq_diff"], 
+            str(row["concept_name"]), 
+            fontsize=8, ha="right", color="blue"
+        )
+
+    # Label top-N by fold_change
+    topN_fc = df.loc[df["fold_change"].nlargest(top_n_fc).index]
+    for _, row in topN_fc.iterrows():
+        plt.text(
+            row["fold_change"], row["freq_diff"], 
+            str(row["concept_name"]), 
+            fontsize=8, ha="left", color="green"
+        )
+
+    plt.xlabel("Fold Change")
+    plt.ylabel("Frequency Difference (hEDS - Control)")
+    plt.title("Volcano-style Plot of Features")
+    plt.legend()
+    plt.show()
