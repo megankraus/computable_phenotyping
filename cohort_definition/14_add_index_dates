@@ -1,0 +1,12 @@
+-- 14_add_index_dates
+-- input: 06_cases_filtered, 09_propensity_matching_controls
+
+-- input index date for feature extraction downstream
+SELECT pmc.*,
+       cf.index_date
+FROM propensity_matching_controls_09 pmc
+LEFT JOIN 06_cases_filtered cf
+  ON pmc.person_id = cf.person_id
+
+-- output: columns: person_id, age, sex_concept_id, race_concept_id, data_partner_id, cohort, distance, weights, subclass, index_date
+-- output: rows: 33,096
