@@ -1,0 +1,16 @@
+--05_potential_cases_demographics
+--inputs: person, potential_cases
+
+--obtain basic demographics, eds dx counts, and index date
+SELECT
+  pc.person_id,
+  pc.eds_dx_count,
+  pc.index_date,
+  -- Age in years at index_date
+  year(pc.index_date) - p.year_of_birth AS age,
+  p.gender_concept_id AS sex_concept_id,
+  p.race_concept_id,
+  p.data_partner_id
+FROM potential_cases AS pc
+JOIN person AS p
+  ON pc.person_id = p.person_id
