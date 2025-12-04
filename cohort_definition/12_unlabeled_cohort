@@ -1,0 +1,22 @@
+-- 12_unlabeled_cohort
+-- input: 09_propensity_matching_controls, person
+
+-- Unlabeled cohort: patients not in cases or matched controls
+SELECT 
+    p.person_id,
+    year(current_date) - p.year_of_birth AS age,
+    p.gender_concept_id AS sex_concept_id,
+    p.race_concept_id,
+    p.data_partner_id
+FROM person p
+WHERE p.person_id NOT IN (
+    SELECT DISTINCT person_id
+    FROM propensity_matching_controls_09
+)
+  AND p.gender_concept_id <> 0
+  AND p.race_concept_id <> 0
+  AND year(current_date) - p.year_of_birth > 18
+
+
+-- output: columns: person_id, age, sex_concept_id, race_concept_id, data_partner_id
+-- rows: 14,690,566
