@@ -1,0 +1,15 @@
+-- 06_High_fc_set
+-- input: 03_cond_feature_extraction
+
+WITH high_fc AS (
+    SELECT *
+    FROM 03_Cond_feature_extraction
+    WHERE fold_change >= 5.0
+)
+
+SELECT 'High Fold Change' AS set_type, *
+FROM high_fc
+
+
+output: columms: set_type, concept_id, concept_name, heds_freq, control_freq, fold_change
+output: rows: 1,238
