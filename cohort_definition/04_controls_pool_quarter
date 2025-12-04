@@ -1,8 +1,12 @@
 --04_controls_pool_quarter
---input: controls_pool
+--input: 03_controls_pool
 
 -- need to take random 25% for compute reasons
 SELECT *
-FROM controls_pool
+FROM 03_controls_pool
 WHERE RANDOM() < 0.25  -- Keeps ~25% of the rows randomly
     AND age >18
+
+
+--output: columns: person_id, age, sex_concept_id, race_concept_id, data_partner, cohort
+--output: rows: 3,673,678
