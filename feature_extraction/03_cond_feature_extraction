@@ -1,0 +1,50 @@
+-- 03_cond_feature_extraction
+-- inputs: concept, condition_occurrence, training_cohort_all 
+
+WITH heds_conditions AS (
+  SELECT
+    co.condition_concept_id,                         -- condition ID
+    COUNT(DISTINCT co.person_id) AS heds_patient_count  -- number of hEDS patients with this condition
+  FROM condition_occurrence co
+  JOIN Training_cohort_all tc
+    ON co.person_id = tc.person_id
+  WHERE tc.cohort = 1                                 -- restrict to hEDS cases
+  GROUP BY co.condition_concept_id
+),
+
+control_conditions AS (
+  SELECT
+    co.condition_concept_id,                         -- condition ID
+    COUNT(DISTINCT co.person_id) AS control_patient_count  -- number of controls with this condition
+  FROM condition_occurrence co
+  JOIN Training_cohort_all tc
+    ON co.person_id = tc.person_id
+  WHERE tc.cohort = 0                                 -- restrict to controls
+  GROUP BY co.condition_concept_id
+),
+
+cohort_sizes AS (
+  SELECT
+    SUM(CASE WHEN cohort = 1 THEN 1 ELSE 0 END) AS heds_total,    -- total size of hEDS cohort
+    SUM(CASE WHEN cohort = 0 THEN 1 ELSE 0 END) AS control_total  -- total size of control cohort
+  FROM Training_cohort_all
+)
+
+SELECT
+  hc.condition_concept_id AS concept_id,                      -- condition ID
+  c.concept_name,                                             -- readable name
+  hc.heds_patient_count * 1.0 / cs.heds_total AS heds_freq,   -- proportion of hEDS patients with condition
+  cc.control_patient_count * 1.0 / cs.control_total AS control_freq, -- proportion of controls
+  ROUND( (hc.heds_patient_count * 1.0 / cs.heds_total) /
+         NULLIF(cc.control_patient_count * 1.0 / cs.control_total, 0)
+       , 2) AS fold_change                                     -- enrichment ratio
+FROM heds_conditions hc
+LEFT JOIN control_conditions cc
+  ON hc.condition_concept_id = cc.condition_concept_id         -- attach control counts
+JOIN cohort_sizes cs                                           -- cross join cohort sizes (only one row)
+LEFT JOIN concept c
+  ON hc.condition_concept_id = c.concept_id                    -- attach concept names
+
+
+-- output: columns: concept_id, concept_name, heds_freq, control_freq, fold_change
+-- output: rows: 12,325
