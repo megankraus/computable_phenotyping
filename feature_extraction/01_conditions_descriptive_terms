@@ -1,0 +1,47 @@
+-- 01_conditions_descriptive_terms
+-- input: concept, condition_occurence, training_cohort_all
+
+WITH heds_conditions AS (
+    SELECT
+        co.condition_concept_id,
+        COUNT(DISTINCT co.person_id) AS heds_patient_count
+    FROM condition_occurrence co
+    JOIN Training_cohort_all t 
+        ON co.person_id = t.person_id
+    WHERE t.cohort = 1        -- restrict to hEDS cases
+      AND co.condition_concept_id IS NOT NULL
+    GROUP BY co.condition_concept_id
+),
+
+control_conditions AS (
+    SELECT
+        co.condition_concept_id,
+        COUNT(DISTINCT co.person_id) AS control_patient_count
+    FROM condition_occurrence co
+    JOIN Training_cohort_all t 
+        ON co.person_id = t.person_id
+    WHERE t.cohort = 0        -- restrict to controls
+      AND co.condition_concept_id IS NOT NULL
+    GROUP BY co.condition_concept_id
+)
+
+SELECT
+    hc.condition_concept_id AS concept_id,                -- concept id for the condition
+    con.concept_name,                                     -- readable condition name
+    hc.heds_patient_count,                                -- number of hEDS patients with this condition
+    cc.control_patient_count,                             -- number of control patients with this condition
+    ROUND(1.0 * hc.heds_patient_count /
+          NULLIF(cc.control_patient_count, 0), 2)          -- fold change; protects against division by zero
+          AS fold_change,
+    'condition_occurrence' AS source_table                -- tag the originating table
+FROM heds_conditions hc
+LEFT JOIN control_conditions cc 
+    ON hc.condition_concept_id = cc.condition_concept_id  -- bring in controls, even if missing
+LEFT JOIN concept con 
+    ON hc.condition_concept_id = con.concept_id           -- add concept names
+ORDER BY fold_change DESC                                 -- sort by enrichment in hEDS
+
+
+
+--output: columns: concept_id, concept_name, heds_patient_count, control_patient_count, fold_change, source_table (not needed) 
+--output: rows: 12,325
