@@ -1,0 +1,39 @@
+-- 14_plot_feature_cooccurrence_top_conditions
+-- input: intersection_set 
+-- lang: python 
+
+def plot_feature_cooccurrence_top_condition(patient_feature_counts, top_n=30):
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import pandas as pd
+
+    df = patient_feature_counts.toPandas()
+
+    feature_freq = df.groupby('feature_name')['person_id'].nunique()
+    top_features = feature_freq.nlargest(top_n).index.tolist()
+
+    df_top = df[df['feature_name'].isin(top_features)]
+
+    binary_matrix = df_top.assign(present=1).pivot_table(
+        index='person_id',
+        columns='feature_name',
+        values='present',
+        fill_value=0
+    )
+
+    # enforce same feature order for rows and columns
+    binary_matrix = binary_matrix[top_features]
+
+    co_matrix = binary_matrix.T.dot(binary_matrix)
+
+    # optional: normalize globally
+    co_matrix = co_matrix / co_matrix.values.max()
+
+    # enforce same order for plotting
+    co_matrix = co_matrix.loc[top_features, top_features]
+
+    plt.figure(figsize=(12,10))
+    sns.heatmap(co_matrix, cmap="coolwarm")
+    plt.title(f"Feature Co-occurrence Matrix (Top {top_n} Conditions)")
+    plt.show()
