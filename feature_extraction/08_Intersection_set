@@ -1,0 +1,12 @@
+-- 08_Intersection_set
+-- input: 03_cond_feature_extraction 
+
+SELECT *,
+       (fold_change * heds_freq) AS combined_score
+FROM 03_Cond_feature_extraction
+WHERE fold_change >= 2.0
+  AND heds_freq >= 0.05
+ORDER BY combined_score DESC
+
+ --output: columns: set_type, concept_id, concept_name, heds_freq, control_freq, fold_change
+-- output: rows: 231
