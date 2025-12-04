@@ -1,0 +1,37 @@
+-- 002_potential_cases
+-- input: condition_occurrences
+
+-- Step 1: Cases with ≥ 2 hEDS/unspecified EDS diagnoses and no excluded EDS codes
+WITH filtered_conditions AS (
+    SELECT
+        co.person_id,
+        co.condition_occurrence_id,
+        co.condition_start_date,
+        he.group_type
+    FROM condition_occurrence co
+    JOIN hEDS_and_exclusions_concepts he
+        ON co.condition_concept_id = he.concept_id
+)
+, cases_pre AS (
+    SELECT
+        person_id,
+        COUNT(DISTINCT condition_occurrence_id) AS eds_dx_count,
+        MIN(condition_start_date) AS index_date
+    FROM filtered_conditions
+    WHERE group_type = 'hEDS'
+    GROUP BY person_id
+    HAVING eds_dx_count >= 2
+)
+-- Step 2: Exclude anyone with 'exclude' codes
+, cases_final AS (
+    SELECT c.*
+    FROM cases_pre c
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM filtered_conditions f
+        WHERE f.person_id = c.person_id
+          AND f.group_type = 'exclude'
+    )
+)
+SELECT *
+FROM cases_final
