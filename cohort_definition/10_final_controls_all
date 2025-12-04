@@ -1,0 +1,10 @@
+-- 10_final_controls_all
+-- input: 09_propensity_matching_controls 
+
+--obtain only controls 
+SELECT *
+FROM 09_propensity_matching_controls
+WHERE cohort = 0
+
+--output: columns: person_id, age, sex_concept_id, race_concept_id, data_partner_id, cohort, distance, weights, subclass
+-- output: row: 16,548 
