@@ -1,0 +1,34 @@
+--12_plot_top_features
+-- input: intersection_set 
+--lang: python
+
+
+def plot_top_features(intersection_set, top_n=20):
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import pandas as pd
+
+    # Convert Spark DF → Pandas
+    df = intersection_set.toPandas()
+
+    # Ensure fold_change is numeric
+    df["fold_change"] = pd.to_numeric(df["fold_change"], errors="coerce")
+
+    # Drop rows where fold_change is missing
+    df = df.dropna(subset=["fold_change"])
+
+    # Get top N
+    topN = df.nlargest(top_n, "fold_change")
+
+    # Plot
+    plt.figure(figsize=(10,8))
+    sns.barplot(data=topN, x="fold_change", y="concept_name", palette="viridis")
+    plt.xlabel("Fold Change")
+    plt.ylabel("Feature")
+    plt.title(f"Top {top_n} Features by Fold Change")
+    
+    # Rotate y-axis labels and adjust layout
+    plt.yticks(rotation=0, fontsize=9)
+    plt.tight_layout()
+    
+    plt.show()
