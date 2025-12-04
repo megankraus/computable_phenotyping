@@ -1,0 +1,12 @@
+-- 07_cases_prepped
+--input: 06_cases_filtered
+
+--
+SELECT 
+    person_id, 
+    age,
+    sex_concept_id, 
+    race_concept_id, 
+    data_partner_id, 
+    cohort
+FROM cases_filtered
