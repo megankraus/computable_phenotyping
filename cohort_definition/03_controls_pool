@@ -1,0 +1,28 @@
+--03_controls_pool
+--input: person, condition_occurrence, hEDS_and_exclusions_contepts
+
+-- Node: controls_pool
+WITH all_excluded_concepts AS (
+    SELECT concept_id
+    FROM hEDS_and_exclusions_concepts
+),
+controls AS (
+    SELECT 
+        p.person_id,
+        year(current_date) - p.year_of_birth AS age, 
+        p.gender_concept_id AS sex_concept_id,
+        p.race_concept_id,
+        p.data_partner_id,
+        0 AS cohort            -- label 0 for controls
+    FROM person p
+    WHERE p.gender_concept_id <> 0
+      AND p.race_concept_id <> 0
+      AND p.person_id NOT IN (
+          SELECT DISTINCT co.person_id
+          FROM condition_occurrence co
+          JOIN all_excluded_concepts he
+            ON co.condition_concept_id = he.concept_id
+      )
+)
+SELECT *
+FROM controls
