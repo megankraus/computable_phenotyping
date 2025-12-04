@@ -1,0 +1,24 @@
+-- 15_final_add_index 
+-- inputs: 14_add_index_dates
+-- lang: R
+
+final_add_index_15 <- function(add_index_dates_14) {
+  library(dplyr)
+
+  # Make a copy of the input
+  df <- add_index_dates_14
+
+  # Step 1: Assign controls the index_date of their matched case (still numeric)
+  df <- df %>%
+    group_by(subclass) %>%
+    mutate(index_date = ifelse(cohort == 0, index_date[cohort == 1], index_date)) %>%
+    ungroup()
+
+  # Step 2: Convert numeric index_date to Date
+  df$index_date <- as.Date(df$index_date, origin = "1970-01-01")
+
+  return(df)
+}
+
+-- output: column: person_id, age, sex_concept_id, race_concept_id, data_partner_id, cohort, distance, weights, subclass, index_date
+-- output: rows: 33,096
