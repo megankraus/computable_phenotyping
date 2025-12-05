@@ -1,0 +1,38 @@
+-- 10_plot_violin_predictions
+-- input: 07_validation-scores
+-- lang: python
+
+def 10_plot_violin_predictions(07_validation_scores):
+    validation_scores = 07_validation_scores
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import numpy as np
+
+    # Training coefficients
+    beta0 = -1.4582630167413744
+    beta1 = 0.09353720976587945
+
+    # Convert Spark DataFrame to pandas
+    df = validation_scores.toPandas()
+    df["cohort"] = df["cohort"].astype(int)
+
+    # Compute predicted probabilities
+    df["pred_prob"] = 1 / (1 + np.exp(-(beta0 + beta1 * df["score"])))
+
+    # Cast cohort to string for clean labeling
+    df["cohort_str"] = df["cohort"].map({0: "Control", 1: "hEDS"})
+
+    # Make violin plot
+    plt.figure(figsize=(7,5))
+    sns.violinplot(x="cohort_str", y="pred_prob", data=df, inner="quartile",
+                   palette={"Control": "blue", "hEDS": "red"})
+
+    # Add threshold line
+    plt.axhline(y=0.44, color="green", linestyle="--", label="Threshold = 0.44")
+
+    plt.xlabel("Cohort")
+    plt.ylabel("Predicted Probability")
+    plt.title("Distribution of Predicted Probabilities by Cohort")
+    plt.legend()
+    plt.show()
