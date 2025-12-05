@@ -1,0 +1,29 @@
+-- 05_logistic_regression_calibration
+-- input: 04_scores_from_labeled_cohort
+--lang: python
+
+def 05_logistic_regression_calibration(04_scores_from_labeled_cohort):
+    scores_from_labeled_cohort = 04_scores_from_labeled_cohort
+    import pandas as pd
+    from sklearn.linear_model import LogisticRegression
+
+    # Convert Spark to pandas
+    df = scores_from_labeled_cohort.toPandas()
+    df["cohort"] = df["cohort"].astype(int)
+
+    X = df[["score"]].values
+    y = df["cohort"].values
+
+    # Fit logistic regression
+    model = LogisticRegression(solver="lbfgs")
+    model.fit(X, y)
+
+    # Extract params into DataFrame
+    params = pd.DataFrame({
+        "intercept": [model.intercept_[0]],
+        "coefficient": [model.coef_[0][0]]
+    })
+
+    return params
+
+-- output: intercept, coefficient
