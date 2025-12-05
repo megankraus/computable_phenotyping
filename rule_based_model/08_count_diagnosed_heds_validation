@@ -1,0 +1,51 @@
+-- 08_count_diagnosed_heds_validation 
+-- input: 07_validation_scores
+
+def count_diagnosed_heds_validation2(07_validation_scores, threshold=0.486):
+    validation_scores = 07_validation_scores
+    import pandas as pd
+    import numpy as np
+
+    # Convert Spark DataFrame to pandas
+    df = validation_scores.toPandas()
+
+    # Ensure cohort is numeric 0/1
+    df["cohort"] = df["cohort"].astype(int)
+
+    # Use the provided beta values
+    beta0 = -1.4582630167413744
+    beta1 = 0.09353720976587945
+
+    # Calculate predicted probability
+    df["prob_heds"] = 1 / (1 + np.exp(-(beta0 + beta1 * df["score"])))
+
+    # Apply threshold
+    df["predicted_hEDS"] = (df["prob_heds"] >= threshold).astype(int)
+
+    # Confusion counts
+    true_positives = ((df["cohort"] == 1) & (df["predicted_hEDS"] == 1)).sum()
+    false_negatives = ((df["cohort"] == 1) & (df["predicted_hEDS"] == 0)).sum()
+    true_negatives = ((df["cohort"] == 0) & (df["predicted_hEDS"] == 0)).sum()
+    false_positives = ((df["cohort"] == 0) & (df["predicted_hEDS"] == 1)).sum()
+
+    # Metrics
+    sensitivity = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 else 0
+    specificity = true_negatives / (true_negatives + false_positives) if (true_negatives + false_positives) > 0 else 0
+
+    # Wrap in a pandas DataFrame for N3C
+    result = pd.DataFrame({
+        "true_positives": [true_positives],
+        "false_negatives": [false_negatives],
+        "true_negatives": [true_negatives],
+        "false_positives": [false_positives],
+        "sensitivity": [sensitivity],
+        "specificity": [specificity],
+        "beta0": [beta0],
+        "beta1": [beta1]
+    })
+
+    return result
+
+
+
+-- output: true pos, false pos, true neg, false neg, sensitivity, specificity, beta0, beta1
