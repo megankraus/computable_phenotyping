@@ -1,0 +1,30 @@
+-- 04_scored_from_labeled_cohort
+--input: patient_feature_counts, intersection_set, training_cohort_all, condition_occurence
+
+WITH patient_feature_counts AS (
+    SELECT 
+        c.person_id,
+        c.cohort,  -- 'heds' vs 'control'
+        co.condition_concept_id AS feature_id,
+        COUNT(*) AS feature_count,
+        CASE WHEN COUNT(*) >= 1 THEN 1 ELSE 0 END AS feature_present
+    FROM condition_occurrence co
+    JOIN Training_cohort_all c
+      ON co.person_id = c.person_id
+    JOIN intersection_set i
+      ON co.condition_concept_id = i.concept_id
+    GROUP BY c.person_id, c.cohort, co.condition_concept_id
+),
+patient_scores AS (
+    SELECT 
+        person_id,
+        cohort,
+        SUM(feature_present) AS score
+    FROM patient_feature_counts
+    GROUP BY person_id, cohort
+)
+SELECT *
+FROM patient_scores
+
+-- output: person_id, cohort, score
+-- row: 21,498
