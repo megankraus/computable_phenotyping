@@ -2,7 +2,7 @@
 -- input: 01_updated_test_patient_feature_scores
 
 
-def 02_evaluate_heds_training(01_updated_test_patient_feature_scores, threshold=0.9):
+def 02_evaluate_heds_training(01_updated_test_patient_feature_scores, threshold=0.486):
     updated_test_patient_feature_scores = 01_updated_test_patient_feature_scores
     import pandas as pd
     import numpy as np
