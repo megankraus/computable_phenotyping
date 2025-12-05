@@ -1,0 +1,43 @@
+-- 06_count_diagnosed_heds_picked_up
+-- input: 04_scores_from_labeled_cohort
+
+def 06_count_diagnosed_heds_picked_up(04_scores_from_labeled_cohort, threshold=0.9):
+    scores_from_labeled_cohort = 04_scores_from_labeled_cohort
+    import pandas as pd
+    from sklearn.linear_model import LogisticRegression
+    import numpy as np
+
+    # Convert Spark DataFrame to pandas
+    df = scores_from_labeled_cohort.toPandas()
+
+    # Ensure cohort is numeric 0/1
+    df["cohort"] = df["cohort"].astype(int)
+
+    # Fit logistic regression
+    X = df[["score"]].values.reshape(-1, 1)
+    y = df["cohort"].values
+    model = LogisticRegression(solver="lbfgs")
+    model.fit(X, y)
+
+    # Get calibrated probabilities
+    beta0 = model.intercept_[0]
+    beta1 = model.coef_[0][0]
+    df["prob_heds"] = 1 / (1 + np.exp(-(beta0 + beta1 * df["score"])))
+
+    # Apply threshold
+    df["predicted_hEDS"] = (df["prob_heds"] >= threshold).astype(int)
+
+    # Count true positives
+    true_positives = ((df["cohort"] == 1) & (df["predicted_hEDS"] == 1)).sum()
+
+    # Wrap in a pandas DataFrame for N3C
+    result = pd.DataFrame({
+        "true_positives": [true_positives],
+        "beta0": [beta0],
+        "beta1": [beta1]
+    })
+
+    return result
+
+
+-- output: true positives, beta0, beta1
