@@ -1,0 +1,31 @@
+-- 07_validation_scores 
+-- inputs: intersection_sets, validation_cohort_all, condition_occurrences
+
+WITH feature_flags AS (
+    SELECT 
+        c.person_id,
+        c.cohort,   
+        co.condition_concept_id AS feature_id,
+        i.concept_name AS feature_name,
+        COUNT(*) AS feature_count,
+        CASE WHEN COUNT(*) >= 1 THEN 1 ELSE 0 END AS predictive_feature
+    FROM condition_occurrence co
+    JOIN Validation_cohort_all c
+      ON co.person_id = c.person_id
+    JOIN intersection_set i
+      ON co.condition_concept_id = i.concept_id
+    GROUP BY c.person_id, co.condition_concept_id, i.concept_name, c.cohort
+),
+patient_scores AS (
+    SELECT 
+        person_id,
+        cohort,
+        SUM(predictive_feature) AS score
+    FROM feature_flags
+    GROUP BY person_id, cohort
+)
+SELECT *
+FROM patient_scores
+
+-- output: person_id, cohort, score
+-- output: row = 9,250 
