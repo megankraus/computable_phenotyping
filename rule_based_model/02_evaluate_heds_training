@@ -1,5 +1,6 @@
 -- 02_evaluate_heds_training
 -- input: 01_updated_test_patient_feature_scores
+-- lang: python
 
 
 def 02_evaluate_heds_training(01_updated_test_patient_feature_scores, threshold=0.486):
