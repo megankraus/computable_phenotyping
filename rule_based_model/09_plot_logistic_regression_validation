@@ -1,0 +1,69 @@
+-- 09_plot_logistic_regression_validation
+-- input: 07_validation_scores
+
+def plot_logistic_regression_threshold(07_validation_scores):
+    validation_scores = 07_validation_scores
+    import pandas as pd
+    from sklearn.metrics import roc_curve
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # Training coefficients
+    beta0 = -1.4582630167413744
+    beta1 = 0.09353720976587945
+
+    # Convert Spark DataFrame to pandas
+    df = validation_scores.toPandas()
+    df["cohort"] = df["cohort"].astype(int)
+
+    # Compute predicted probabilities
+    df["pred_prob"] = 1 / (1 + np.exp(-(beta0 + beta1 * df["score"])))
+
+    # ROC for optimal threshold (Youden's J)
+    fpr, tpr, thresholds = roc_curve(df["cohort"], df["pred_prob"])
+    youden_index = tpr - fpr
+    optimal_idx = np.argmax(youden_index)
+    optimal_threshold = thresholds[optimal_idx]
+
+    # Below threshold
+    below_thresh = df["pred_prob"] < optimal_threshold
+    # Above threshold
+    above_thresh = df["pred_prob"] >= optimal_threshold
+
+    # Logistic curve for plotting
+    x_range = np.linspace(df["score"].min(), df["score"].max(), 200)
+    y_curve = 1 / (1 + np.exp(-(beta0 + beta1 * x_range)))
+
+    plt.figure(figsize=(8,5))
+    plt.plot(x_range, y_curve, label="Logistic Regression Curve", color="blue")
+
+    # All points below threshold in gray
+    plt.scatter(df.loc[below_thresh, "score"], df.loc[below_thresh, "pred_prob"], color="gray", alpha=0.6, label="Below Threshold")
+
+    # Points above threshold colored by correctness
+    # True positives (predicted hEDS & actual hEDS)
+    tp = df[(above_thresh) & (df["cohort"] == 1)]
+    plt.scatter(tp["score"], tp["pred_prob"], color="red", alpha=0.8, label="True Positives")
+
+    # False positives (predicted hEDS & actual control)
+    fp = df[(above_thresh) & (df["cohort"] == 0)]
+    plt.scatter(fp["score"], fp["pred_prob"], color="blue", alpha=0.8, label="False Positives")
+
+    # Optimal threshold line
+    plt.axhline(y=optimal_threshold, color="green", linestyle="--", label=f"Optimal Threshold = {optimal_threshold:.3f}")
+    plt.xlabel("Score")
+    plt.ylabel("Predicted Probability")
+    plt.title("Rule-Based Computable Phenotype Scoring")
+    plt.legend()
+    plt.show()
+
+    # Return threshold and coefficients in DataFrame for Foundry
+    result = pd.DataFrame({
+        "optimal_threshold": [optimal_threshold],
+        "beta0": [beta0],
+        "beta1": [beta1]
+    })
+
+    return result
+
+-- output: optimal_threshold, beta0, beta1
