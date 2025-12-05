@@ -1,0 +1,56 @@
+-- 03_plot_logistic_regression_threshold_training
+-- input: 01_updated_test_patient_feature_scores
+
+def 04_plot_logistic_regression_threshold_training(updated_test_patient_feature_scores):
+    updated_test_patient_feature_scores = updated_test_patient_feature_scores
+    import pandas as pd
+    from sklearn.metrics import roc_curve, auc
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # Training coefficients
+    beta0 = -1.4582630167413744
+    beta1 = 0.09353720976587945
+
+    # Convert Spark DataFrame to pandas
+    df = updated_test_patient_feature_scores.toPandas()
+    df["cohort"] = df["cohort"].astype(int)
+
+    # Compute predicted probabilities using training coefficients
+    df["pred_prob"] = 1 / (1 + np.exp(-(beta0 + beta1 * df["score"])))
+
+    # ROC to find optimal threshold (Youden's J)
+    fpr, tpr, thresholds = roc_curve(df["cohort"], df["pred_prob"])
+    youden_index = tpr - fpr
+    optimal_idx = np.argmax(youden_index)
+    optimal_threshold = thresholds[optimal_idx]
+
+    # Highlight patients above threshold
+    above_thresh = df["pred_prob"] >= optimal_threshold
+    below_thresh = df["pred_prob"] < optimal_threshold
+
+    # Logistic curve for plotting
+    x_range = np.linspace(df["score"].min(), df["score"].max(), 200)
+    y_curve = 1 / (1 + np.exp(-(beta0 + beta1 * x_range)))
+
+    plt.figure(figsize=(8,5))
+    plt.plot(x_range, y_curve, label="Logistic Regression Curve", color="blue")
+    plt.scatter(df.loc[below_thresh, "score"], df.loc[below_thresh, "pred_prob"], color="gray", alpha=0.6, label="Below Threshold")
+    plt.scatter(df.loc[above_thresh, "score"], df.loc[above_thresh, "pred_prob"], color="red", alpha=0.8, label="Above Threshold")
+    plt.axhline(y=optimal_threshold, color="green", linestyle="--", label=f"Optimal Threshold = {optimal_threshold:.3f}")
+    plt.xlabel("Score")
+    plt.ylabel("Predicted Probability")
+    plt.title("Validation Set Logistic Regression Probabilities with Threshold Highlighted")
+    plt.legend()
+    plt.show()
+
+    # Return threshold and coefficients in DataFrame for Foundry
+    result = pd.DataFrame({
+        "optimal_threshold": [optimal_threshold],
+        "beta0": [beta0],
+        "beta1": [beta1]
+    })
+
+    return result
+
+-- output: optimum threshold, beta0, beta1
