@@ -1,0 +1,26 @@
+-- 01.2_patient_features_count
+-- inputs: intersection_set, training_cohort_all, condition_occurrence 
+
+
+WITH patient_feature_counts AS (
+    SELECT 
+        c.person_id,
+        c.cohort,
+        co.condition_concept_id AS feature_id,
+        i.concept_name AS feature_name,
+        COUNT(*) AS feature_count,
+        CASE WHEN COUNT(*) >= 1 THEN 1 ELSE 0 END AS feature_present
+    FROM condition_occurrence co
+    JOIN Training_cohort_all c
+      ON co.person_id = c.person_id
+    JOIN intersection_set i
+      ON co.condition_concept_id = i.concept_id
+    WHERE co.condition_start_date <= c.index_date + INTERVAL 1 YEAR
+    GROUP BY c.person_id, c.cohort, co.condition_concept_id, i.concept_name
+)
+SELECT *
+FROM patient_feature_counts
+
+
+-- output: person_id, cohort, feature_id, feature_name, feature_count, feature_present
+-- output: rows = 298,889
