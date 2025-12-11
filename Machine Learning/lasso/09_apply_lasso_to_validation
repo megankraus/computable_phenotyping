@@ -1,0 +1,52 @@
+-- 09_apply_lasso_to_validation 
+-- inputs: val_feature_matrix, 01_train_lasso_training_set
+-- lang: python
+
+
+def 09_apply_lasso_to_validation(val_feature_matrix, 01_train_lasso_training_set):
+    train_lasso_training_set = 01_train_lasso_training_set
+    import pandas as pd
+    import numpy as np
+    from pyspark.sql import SparkSession
+    import json
+
+    spark = SparkSession.builder.getOrCreate()
+
+    # Retrieve coefficients and feature order
+    row = train_lasso_training_set.limit(1).collect()[0]
+    coef_dict = json.loads(row["coef_json"])
+    feature_cols = json.loads(row["feature_cols_json"])
+
+    # Keep only non-zero coefficients
+    nonzero_features = [f for f in feature_cols if coef_dict[f] != 0]
+    coef_array = np.array([coef_dict[f] for f in nonzero_features])
+
+    # Validation to pandas
+    vdf = val_feature_matrix.toPandas() if not isinstance(val_feature_matrix, pd.DataFrame) else val_feature_matrix
+
+    # Ensure all non-zero features exist
+    for f in nonzero_features:
+        if f not in vdf.columns:
+            vdf[f] = 0.0
+
+    # Vectorized prediction
+    X_val_array = vdf[nonzero_features].to_numpy()
+    linear_pred = X_val_array @ coef_array
+    proba = 1 / (1 + np.exp(-linear_pred))
+    pred = (proba >= 0.5).astype(int)
+
+    # Build Spark DataFrame
+    out_pd = pd.DataFrame({
+        "person_id": vdf["person_id"],
+        "cohort": vdf["cohort"],
+        "probability": proba.astype(float),
+        "prediction": pred.astype(int)
+    })
+    out_pd["model_name"] = "lasso"
+
+    return spark.createDataFrame(out_pd)
+
+
+
+-- output: person_id, cohort, probability, prediction, model_name
+-- rows: number of patients in validation set 
