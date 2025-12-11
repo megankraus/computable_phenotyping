@@ -1,0 +1,51 @@
+-- 14_compute_xgb_shap_from_saved_model
+-- inputs: val_feature_matrix, 01_train_xgboost_training_set
+-- lang: python 
+
+
+def 14_compute_xgb_shap_from_saved_model(val_feature_matrix, 01_train_xgboost_training_set):
+    train_xgboost_training_set = 01_train_xgboost_training_set
+    import json
+    import pandas as pd
+    import xgboost as xgb
+    import shap
+    from pyspark.sql import SparkSession, Row
+
+    spark = SparkSession.builder.getOrCreate()
+
+    # ---- Load model + feature order ----
+    row = train_xgboost_training_set.limit(1).collect()[0]
+    model_json = row["model_json"]
+    feature_cols = json.loads(row["feature_cols_json"])
+
+    booster = xgb.Booster()
+    booster.load_model(bytearray(model_json.encode("utf-8")))
+
+    # ---- Validation to Pandas ----
+    vdf = val_feature_matrix.toPandas() if not isinstance(val_feature_matrix, pd.DataFrame) else val_feature_matrix
+
+    # Align with training feature order
+    for col in feature_cols:
+        if col not in vdf.columns:
+            vdf[col] = 0.0
+    X_val = vdf[feature_cols]
+
+    # ---- SHAP explainer ----
+    explainer = shap.TreeExplainer(booster)
+    shap_values = explainer.shap_values(X_val)
+
+    # ---- Mean absolute SHAP importance ----
+    shap_importances = pd.DataFrame({
+        "feature": feature_cols,
+        "mean_abs_shap": abs(shap_values).mean(axis=0)
+    }).sort_values("mean_abs_shap", ascending=False).reset_index(drop=True)
+
+    # ---- Convert to Spark DataFrame for Foundry ----
+    shap_sdf = spark.createDataFrame(shap_importances)
+
+    return shap_sdf
+
+
+
+-- output: feature, mean_abs_shap
+-- rows: number of features
