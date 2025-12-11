@@ -1,0 +1,14 @@
+-- 13_xgboost_validation_num_heds_detection
+-- input: 10_apply_xgboost_to_validation 
+-- lang: sql
+
+
+SELECT 
+    COUNT(*) AS total_labeled_patients,
+    SUM(prediction) AS detected_hEDS_patients
+FROM apply_xgboost_to_validation
+WHERE cohort = 1  -- only true hEDS cases
+
+
+
+-- output: total_labeled_patients, detected_hEDS_patients
