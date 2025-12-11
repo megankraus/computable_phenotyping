@@ -1,0 +1,17 @@
+-- 03_patient_predictions
+-- inputs: 02_agg_contributions_per_patient
+-- lang: sql 
+
+
+SELECT
+    person_id,
+    1.0 / (1.0 + EXP(-xgb_score)) AS prob_heds,
+    CASE 
+        WHEN 1.0 / (1.0 + EXP(-xgb_score)) >= 0.9 THEN 1
+        ELSE 0
+    END AS predicted_hEDS
+FROM agg_contributions_per_patient
+
+
+
+output: person_id, probs_heds, predicted_hEDS
