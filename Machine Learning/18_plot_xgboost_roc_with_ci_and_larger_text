@@ -1,0 +1,58 @@
+-- 18_plot_xgboost_roc_with_ci_and_larger_text
+-- inputs: 10_apply_xgboost_to_validation, 02_apply_xgboost_to_test
+-- lang: python 
+
+
+def 18_plot_xgboost_roc_with_ci_and_larger_text(10_apply_xgboost_to_validation, 02_apply_xgboost_to_test, n_bootstraps=1000, random_seed=42):
+    apply_xgboost_to_validation = 10_apply_xgboost_to_validation
+    apply_xgboost_to_test = 02_apply_xgboost_to_test
+    import matplotlib.pyplot as plt
+    from sklearn.metrics import roc_curve, auc
+    import numpy as np
+    import pandas as pd
+
+    # Convert Spark DataFrames to pandas
+    val_df = apply_xgboost_to_validation.toPandas()
+    test_df = apply_xgboost_to_test.toPandas()
+
+    plt.figure(figsize=(10,6))
+
+    rng = np.random.RandomState(random_seed)
+
+    for label, df in [('Validation', val_df), ('Training', test_df)]:
+        for model in df['model_name'].unique():
+            model_df = df[df['model_name'] == model]
+            y_true = model_df['cohort'].values
+            y_score = model_df['probability'].values
+
+            # Original ROC and AUC
+            fpr, tpr, _ = roc_curve(y_true, y_score)
+            roc_auc = auc(fpr, tpr)
+
+            # Bootstrap for CI
+            bootstrapped_scores = []
+            n_samples = len(y_true)
+            for i in range(n_bootstraps):
+                indices = rng.randint(0, n_samples, n_samples)
+                if len(np.unique(y_true[indices])) < 2:
+                    continue
+                score = auc(*roc_curve(y_true[indices], y_score[indices])[:2])
+                bootstrapped_scores.append(score)
+
+            ci_lower = np.percentile(bootstrapped_scores, 2.5)
+            ci_upper = np.percentile(bootstrapped_scores, 97.5)
+
+            plt.plot(fpr, tpr, lw=2, label=f"{model} {label} (AUC={roc_auc:.3f}, CI={ci_lower:.3f}-{ci_upper:.3f})")
+
+    plt.plot([0,1], [0,1], color='gray', linestyle='--')
+    plt.xlabel("False Positive Rate", fontsize=14)
+    plt.ylabel("True Positive Rate", fontsize=14)
+    plt.title("Tree-Based ML ROC Curve Comparison", fontsize=16)
+    plt.legend(loc="lower right", fontsize=12)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.show()
+
+
+
+-- output: ROC curve with both validation and training set, FPR on x, TPR on y, legend and title displayed. 
