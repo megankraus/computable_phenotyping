@@ -1,0 +1,30 @@
+-- 17_val_plot_xgboost_roc
+-- input: 10_apply_xgboost_to_validation 
+-- lang: python 
+
+
+def 17_val_plot_xgboost_roc(10_apply_xgboost_to_validation):
+    apply_xgboost_to_validation = 10_apply_xgboost_to_validation
+
+    import matplotlib.pyplot as plt
+    from sklearn.metrics import roc_curve, auc, precision_recall_curve
+
+    df = apply_xgboost_to_validation.toPandas()
+
+    plt.figure(figsize=(10,5))
+
+    for model in df['model_name'].unique():
+        model_df = df[df['model_name'] == model]
+        fpr, tpr, _ = roc_curve(model_df['cohort'], model_df['probability'])
+        roc_auc = auc(fpr, tpr)
+        plt.plot(fpr, tpr, label=f"{model} (AUC={roc_auc:.3f})")
+
+    plt.plot([0,1],[0,1],'k--')
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title("Tree-Based ML Validation Set ROC Curves")
+    plt.legend()
+    plt.show()
+
+
+-- output: ROC curve, false positive rate on bottom, true positive rate on y, legend and title displayed. 
