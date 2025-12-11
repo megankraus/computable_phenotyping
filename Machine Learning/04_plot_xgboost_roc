@@ -1,0 +1,30 @@
+-- 04_plot_xgboost_roc
+-- input: 02_apply_xgboost_to_test
+-- lang: python 
+
+
+def 04_plot_xgboost_roc(02_apply_xgboost_to_test):
+    apply_xgboost_to_test = 02_apply_xgboost_to_test
+    import matplotlib.pyplot as plt
+    from sklearn.metrics import roc_curve, auc
+
+    df = apply_xgboost_to_test.toPandas()
+
+    plt.figure(figsize=(10,5))
+
+    for model in df['model_name'].unique():
+        model_df = df[df['model_name'] == model]
+        fpr, tpr, _ = roc_curve(model_df['cohort'], model_df['probability'])
+        roc_auc = auc(fpr, tpr)
+        plt.plot(fpr, tpr, color="orange", label=f"{model} (AUC={roc_auc:.3f})")
+
+    plt.plot([0,1], [0,1], 'k--')
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title("Tree-Based ML Training Set ROC Curves")
+    plt.legend()
+    plt.show()
+
+
+
+-- output: ROC curve with false pos rate on x axis and true positive rate on y, legend and title shown 
