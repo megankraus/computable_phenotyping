@@ -1,0 +1,24 @@
+-- 06_get_counts_of_undiagnosed_heds
+-- input: 05_scoring_table
+-- lang: sql
+
+
+WITH scoring_with_prob AS (
+    SELECT
+        person_id,
+        score,
+        1.0 / (1.0 + EXP(-(-1.4582630167413744 + 0.09353720976587945 * score))) AS prob_heds
+    FROM
+        scoring_table
+)
+SELECT
+    COUNT(*) AS total_patients,
+    SUM(CASE WHEN prob_heds >= 0.9 THEN 1 ELSE 0 END) AS predicted_hEDS,
+    SUM(CASE WHEN prob_heds < 0.9 THEN 1 ELSE 0 END) AS predicted_non_hEDS
+FROM
+    scoring_with_prob
+
+
+
+
+-- output: total_patients, predicted_hEDS, predicted_non_hEDS
