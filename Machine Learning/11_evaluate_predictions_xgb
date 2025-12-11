@@ -1,0 +1,50 @@
+-- 11_evaluate_predictions_xgb
+-- input: 10_apply_xgboost_to_validation
+-- lang: python 
+
+
+def 11_evaluate_predictions_xgb(10_apply_xgboost_to_validation):
+    apply_xgboost_to_validation = 10_apply_xgboost_to_validation
+    import pandas as pd
+    from pyspark.sql import SparkSession, Row
+    from sklearn.metrics import (
+        roc_auc_score, average_precision_score, accuracy_score,
+        precision_score, recall_score, f1_score, confusion_matrix
+    )
+
+    spark = SparkSession.builder.getOrCreate()
+
+    pdf = apply_xgboost_to_validation.toPandas() if not isinstance(apply_xgboost_to_validation, pd.DataFrame) else apply_xgboost_to_validation
+
+    y_true = pdf["cohort"].astype(int).values
+    y_pred = pdf["prediction"].astype(int).values
+    y_prob = pdf["probability"].astype(float).values
+
+    # Confusion matrix
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+
+    # Sensitivity = Recall = TP / (TP + FN)
+    sensitivity = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    # Specificity = TN / (TN + FP)
+    specificity = tn / (tn + fp) if (tn + fp) > 0 else 0.0
+    # False positive percentage
+    false_positive_pct = fp / (fp + tn) if (fp + tn) > 0 else 0.0
+
+    metrics = {
+        "AUROC": float(roc_auc_score(y_true, y_prob)),
+        "AUPRC": float(average_precision_score(y_true, y_prob)),
+        "Accuracy": float(accuracy_score(y_true, y_pred)),
+        "Precision": float(precision_score(y_true, y_pred, zero_division=0)),
+        "Recall": float(recall_score(y_true, y_pred, zero_division=0)),  # same as Sensitivity
+        "F1": float(f1_score(y_true, y_pred, zero_division=0)),
+        "Sensitivity": float(sensitivity),
+        "Specificity": float(specificity),
+        "False_Positive_Rate": float(false_positive_pct),
+        "n": int(len(pdf))
+    }
+
+    return spark.createDataFrame([Row(**metrics)])
+
+
+
+-- output: AUROC, AUPRC, Accuracy, Precision, Recall, F1, Sensitivity, Specificity, False Positive, n 
