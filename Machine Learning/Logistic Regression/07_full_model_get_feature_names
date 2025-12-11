@@ -1,0 +1,20 @@
+-- 07_full_model_get_feature_names
+-- inputs: patient_feature_counts (from RB model), 06_apply_logistic_regression_to_test_with_coefficients
+-- lang: sql 
+
+
+-- Join feature importance with feature names
+SELECT
+    s.feature,
+    f.feature_name,
+    s.coefficient
+FROM apply_logistic_regression_to_test_with_coefficients AS s
+LEFT JOIN (
+    SELECT DISTINCT feature_id, feature_name
+    FROM patient_feature_counts
+) AS f
+    ON s.feature = f.feature_id
+
+
+-- output: feature (ID), feature_name, coefficient 
+-- rows: number of features 
