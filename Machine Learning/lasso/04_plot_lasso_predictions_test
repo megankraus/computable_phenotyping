@@ -1,0 +1,82 @@
+-- 04_plot_lasso_predictions_test
+-- input: 02_apply_lasso_to_test
+-- lang: python 
+
+
+def 04_plot_lasso_predictions_test(02_apply_lasso_to_test):
+    apply_lasso_to_test = 02_apply_lasso_to_test
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from sklearn.metrics import roc_curve
+    import matplotlib.patches as mpatches
+
+    df = apply_lasso_to_test.toPandas() if not isinstance(apply_lasso_to_test, pd.DataFrame) else apply_lasso_to_test
+    df["cohort"] = df["cohort"].astype(int)
+
+    fpr, tpr, thresholds = roc_curve(df["cohort"], df["probability"])
+    optimal_idx = np.argmax(tpr - fpr)
+    optimal_threshold = thresholds[optimal_idx]
+
+    df["predicted"] = (df["probability"] >= optimal_threshold).astype(int)
+
+    tp = ((df["cohort"] == 1) & (df["predicted"] == 1)).sum()
+    fn = ((df["cohort"] == 1) & (df["predicted"] == 0)).sum()
+    tn = ((df["cohort"] == 0) & (df["predicted"] == 0)).sum()
+    fp = ((df["cohort"] == 0) & (df["predicted"] == 1)).sum()
+
+    sensitivity = tp / (tp + fn) if (tp + fn) > 0 else 0
+    specificity = tn / (tn + fp) if (tn + fp) > 0 else 0
+    false_positive_rate = fp / (fp + tn) if (fp + tn) > 0 else 0
+
+    df = df.sort_values("probability").reset_index(drop=True)
+
+    colors = []
+    for _, row in df.iterrows():
+        if row["predicted"] == 1 and row["cohort"] == 1:
+            colors.append("green")
+        elif row["predicted"] == 1 and row["cohort"] == 0:
+            colors.append("red")
+        elif row["predicted"] == 0 and row["cohort"] == 0:
+            colors.append("gray")
+        else:
+            colors.append("blue")
+
+    x = np.arange(len(df))
+
+    plt.figure(figsize=(12,5))
+    plt.bar(x, df["probability"], color="lightgray", alpha=0.6)
+    plt.scatter(x, df["probability"], c=colors, s=40, zorder=3)
+
+    plt.axhline(y=optimal_threshold, color="black", linestyle="--", 
+                label=f"Optimal Threshold = {optimal_threshold:.3f}")
+
+    tp_patch = mpatches.Patch(color="green", label="True Positive")
+    fp_patch = mpatches.Patch(color="red", label="False Positive")
+    tn_patch = mpatches.Patch(color="gray", label="True Negative")
+    fn_patch = mpatches.Patch(color="blue", label="False Negative")
+    thresh_patch = mpatches.Patch(facecolor="none", edgecolor="black", label="Threshold")
+
+    plt.legend(handles=[tp_patch, fp_patch, tn_patch, fn_patch, thresh_patch], loc="upper left")
+
+    plt.xlabel("Patients")
+    plt.ylabel("Predicted Probability of hEDS")
+    plt.title("ML Lasso Log. Regression Patient Predictions Training Set")
+    plt.tight_layout()
+    plt.show()
+
+    return pd.DataFrame({
+        "optimal_threshold": [optimal_threshold],
+        "sensitivity": [sensitivity],
+        "specificity": [specificity],
+        "false_positive_rate": [false_positive_rate],
+        "true_positives": [tp],
+        "false_negatives": [fn],
+        "true_negatives": [tn],
+        "false_positives": [fp]
+    })
+
+
+
+-- output: optimum_threshold, sensitivity, specificity, false_positive_rate, true_positives, false_negatives, true_negatives, false_positives
+-- figure: patients on x, predicted prob on y, title on top, legend shown, threshold shown
