@@ -1,0 +1,24 @@
+This was built on a custom N3C environment composed of 
+  vector-spark-module-py
+  vector-spark-module-r
+  scikit-learn
+  r-survminer
+  r-ggplot2
+  r-gtsummary
+  python (3.9) 
+  numpy (1)
+  plotly
+  r-base(4.3.0)
+  r-survival
+  pandas (1.*)
+  lifelines
+  shap 
+  r-arrow
+  seaborn
+  matplotlib (3.*)
+  r-dplyr
+  r-matchit
+  xgboost
+
+
+if version not indicated, it's listed as automatic 
