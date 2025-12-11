@@ -1,0 +1,34 @@
+-- 05_scoring_table
+-- inputs: Intersection_set, condition_occurence, Unlabeled_cohort
+-- lang: sql
+
+
+WITH feature_flags AS (
+    SELECT 
+        c.person_id,
+        'unlabeled' AS cohort,   -- hardcode cohort
+        co.condition_concept_id AS feature_id,
+        i.concept_name AS feature_name,
+        COUNT(*) AS feature_count,
+        CASE WHEN COUNT(*) >= 1 THEN 1 ELSE 0 END AS predictive_feature
+    FROM condition_occurrence co
+    JOIN Unlabeld_cohort c
+      ON co.person_id = c.person_id
+    JOIN Intersection_set i
+      ON co.condition_concept_id = i.concept_id
+    GROUP BY c.person_id, co.condition_concept_id, i.concept_name
+),
+patient_scores AS (
+    SELECT 
+        person_id,
+        'unlabeled' AS cohort,
+        SUM(predictive_feature) AS score
+    FROM feature_flags
+    GROUP BY person_id
+)
+SELECT *
+FROM patient_scores
+
+
+
+-- output: person_id, cohort, score
