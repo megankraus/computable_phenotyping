@@ -1,0 +1,33 @@
+-- 03_evaluate_predictions_xgb_test
+-- input: 02_apply_xgboost_to_test
+-- lang: python 
+
+
+def 03_evaluate_predictions_xgb_test(02_apply_xgboost_to_test):
+    apply_xgboost_to_test = 02_apply_xgboost_to_test
+    import pandas as pd
+    from pyspark.sql import SparkSession, Row
+    from sklearn.metrics import roc_auc_score, average_precision_score, accuracy_score, precision_score, recall_score, f1_score
+
+    spark = SparkSession.builder.getOrCreate()
+
+    pdf = apply_xgboost_to_test.toPandas() if not isinstance(apply_xgboost_to_test, pd.DataFrame) else apply_xgboost_to_test
+
+    y_true = pdf["cohort"].astype(int).values
+    y_pred = pdf["prediction"].astype(int).values
+    y_prob = pdf["probability"].astype(float).values
+
+    metrics = {
+        "AUROC": float(roc_auc_score(y_true, y_prob)),
+        "AUPRC": float(average_precision_score(y_true, y_prob)),
+        "Accuracy": float(accuracy_score(y_true, y_pred)),
+        "Precision": float(precision_score(y_true, y_pred, zero_division=0)),
+        "Recall": float(recall_score(y_true, y_pred, zero_division=0)),
+        "F1": float(f1_score(y_true, y_pred, zero_division=0)),
+        "n": int(len(pdf))
+    }
+    return spark.createDataFrame([Row(**metrics)])
+
+
+
+-- output: AUROC, AUPRC, Accuracy, Precision, Recall, F1, n 
