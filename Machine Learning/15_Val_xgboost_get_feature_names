@@ -1,0 +1,19 @@
+-- 15_Val_xgboost_get_feature_names
+-- input: 14_compute_xgb_shap_from_saved_model, validation_patient_feature_counts (from rule-based method) 
+-- lang: sql 
+
+-- Join feature importance with feature names
+SELECT
+    s.feature,
+    f.feature_name,
+    s.mean_abs_shap
+FROM compute_xgb_shap_from_saved_model AS s
+LEFT JOIN (
+    SELECT DISTINCT feature_id, feature_name
+    FROM Validation_patient_feature_counts
+) AS f
+    ON s.feature = f.feature_id
+
+
+-- output: feature (ID), feature_name, mean_abs_shap
+-- rows: number of features
