@@ -1,0 +1,27 @@
+--01_Unlabeled_feature_counts
+-- inputs: Intersection_set, condition_occurrence, Unlabeled_cohort
+-- lang: sql 
+
+
+
+WITH patient_feature_counts AS (
+    SELECT 
+        u.person_id,
+        co.condition_concept_id AS feature_id,
+        COUNT(*) AS feature_count,
+        CASE WHEN COUNT(*) >= 1 THEN 1 ELSE 0 END AS feature_present
+    FROM condition_occurrence co
+    JOIN Unlabeld_cohort u
+      ON co.person_id = u.person_id
+    JOIN Intersection_set i
+      ON co.condition_concept_id = i.concept_id
+    GROUP BY u.person_id, co.condition_concept_id
+)
+SELECT *
+FROM patient_feature_counts
+
+
+
+
+-- Output: person_id, feature_id, feature_count, feature_present
+-- rows: number of patients in unlabeled 
