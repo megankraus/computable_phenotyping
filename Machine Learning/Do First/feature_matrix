@@ -1,0 +1,42 @@
+-- feature_matrix
+-- input: patient_feature_counts (from RB method) 
+-- lang: python
+
+
+def feature_matrix(patient_feature_counts):
+    from pyspark.sql import functions as F
+
+    # Step 1: Compute feature frequencies
+    feature_freq = (
+        patient_feature_counts
+        .groupBy("feature_id")
+        .agg(F.countDistinct("person_id").alias("count"))
+        .withColumn("freq", F.col("count") / patient_feature_counts.select("person_id").distinct().count())
+    )
+
+    # Select top 220 features
+    top_features = (
+        feature_freq
+        .orderBy(F.desc("freq"))
+        .limit(220)
+        .select("feature_id")
+    )
+
+    # Filter original table to only top features
+    top_feature_matrix = patient_feature_counts.join(
+        top_features, on="feature_id", how="inner"
+    ).withColumn("present", F.lit(1))
+
+    # Pivot to wide format for boolean matrix
+    boolean_matrix = top_feature_matrix.groupBy("person_id").pivot("feature_id").agg(F.max("present")).fillna(0)
+
+    # Add cohort column from original table
+    labels = patient_feature_counts.select("person_id", "cohort").distinct()
+    labeled_matrix = boolean_matrix.join(labels, on="person_id", how="inner")
+
+    return labeled_matrix
+
+
+
+-- outputs: person_is, feature ID (220 total), cohort
+-- rows: total patients in training set 
