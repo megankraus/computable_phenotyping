@@ -1,0 +1,55 @@
+-- 13_apply_logistic_regression_to_validation_with_coefficients
+-- inputs: val_feature_matrix, 01_train_logistic_regression_training_set
+-- lang: python 
+
+def 13_apply_logistic_regression_to_validation_with_coefficients(val_feature_matrix, 01_train_logistic_regression_training_set):
+    train_logistic_regression_training_set = 01_train_logistic_regression_training_set
+    import pandas as pd
+    import numpy as np
+    from pyspark.sql import SparkSession
+    import json
+
+    spark = SparkSession.builder.getOrCreate()
+
+    # Retrieve serialized coefficients and feature order
+    row = train_logistic_regression_training_set.limit(1).collect()[0]
+    coef_dict = json.loads(row["coef_json"])  # dict: feature_name -> coefficient
+    feature_cols = json.loads(row["feature_cols_json"])  # ordered feature list
+
+    # Convert validation data to pandas
+    vdf = val_feature_matrix.toPandas() if not isinstance(val_feature_matrix, pd.DataFrame) else val_feature_matrix
+
+    # Ensure all features exist
+    for f in feature_cols:
+        if f not in vdf.columns:
+            vdf[f] = 0.0
+
+    # Vectorized prediction
+    coef_array = np.array([coef_dict[f] for f in feature_cols])
+    X_val_array = vdf[feature_cols].to_numpy()
+    linear_pred = X_val_array @ coef_array
+    proba = 1 / (1 + np.exp(-linear_pred))
+    pred = (proba >= 0.5).astype(int)
+
+    # ---- Build validation predictions Spark DataFrame ----
+    pred_pd = pd.DataFrame({
+        "person_id": vdf["person_id"],
+        "cohort": vdf["cohort"],
+        "probability": proba.astype(float),
+        "prediction": pred.astype(int)
+    })
+    pred_pd["model_name"] = "logistic_regression"
+    pred_sdf = spark.createDataFrame(pred_pd)
+
+    # ---- Build coefficients Spark DataFrame ----
+    coef_df = pd.DataFrame({
+        "feature": feature_cols,
+        "coefficient": [coef_dict[f] for f in feature_cols]
+    }).sort_values("coefficient", key=abs, ascending=False)
+    coef_sdf = spark.createDataFrame(coef_df)
+
+    return coef_sdf
+
+
+-- output: feature, coefficient
+-- rows: number of features
