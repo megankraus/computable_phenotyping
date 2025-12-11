@@ -1,0 +1,16 @@
+-- 02_agg_contributions_per_patient
+-- input: 01_Unlabeled_feature_counts, Compute_xgb_shap (from ML xgboost) 
+--lang: sql 
+
+
+SELECT
+    p.person_id,
+    SUM(p.feature_present * s.mean_abs_shap) AS xgb_score
+FROM Unlabeled_feature_counts p
+LEFT JOIN Compute_xgb_shap s
+  ON p.feature_id = s.feature
+GROUP BY p.person_id
+
+
+
+-- output: person_id, xgb_score
