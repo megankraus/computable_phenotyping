@@ -1,0 +1,42 @@
+-- 09_test_xgboost_plot_shap
+-- input: 08_test_get_xgboost_get_feature_names
+-- lang: python 
+
+def 09_test_xgboost_plot_shap(08_test_xgboost_get_feature_names, top_n=30, feature_names_map=None):
+    test_xgboost_get_feature_names = 08_test_xgboost_get_feature_names
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    # Convert Spark DF to pandas
+    shap_df = test_xgboost_get_feature_names.toPandas()
+
+    # Replace feature names if a mapping is provided
+    if feature_names_map is not None:
+        shap_df['feature_name'] = shap_df['feature_name'].map(feature_names_map).fillna(shap_df['feature_name'])
+
+    # Sort and select top_n
+    shap_df = shap_df.sort_values('mean_abs_shap', ascending=False).head(top_n)
+
+    # Force desired plotting order
+    shap_df = shap_df.assign(order_rank=shap_df['mean_abs_shap']).sort_values('order_rank', ascending=False)
+
+    plt.figure(figsize=(10, 8))
+
+    sns.barplot(
+        x='mean_abs_shap',
+        y='feature_name',
+        data=shap_df,
+        orient='h'
+    )
+
+    plt.xlabel("Mean |SHAP|")
+    plt.ylabel("Feature")
+    plt.title(f"Tree-Based ML Training Set Top {top_n} SHAP Features")
+    #plt.gca().invert_yaxis()
+    plt.tight_layout()
+    plt.show()
+
+
+
+-- output: figure. mean shap on x axis, feature on y axis, title across top 
