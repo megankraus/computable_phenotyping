@@ -1,0 +1,36 @@
+-- 08_lasso_model_coeff
+-- input: 07_lasso_get_names
+-- lang: python 
+
+
+def 08_lasso_model_coeff(07_lasso_get_names):
+    lasso_get_names = 07_lasso_get_names
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    # Convert Spark DataFrame to Pandas
+    coef_pd = lasso_get_names.toPandas()
+
+    # Sort by absolute coefficient
+    coef_pd["abs_coef"] = coef_pd["coefficient"].abs()
+    coef_pd = coef_pd.sort_values("abs_coef", ascending=False)
+
+    # Plot top features
+    plt.figure(figsize=(10,8))
+    sns.barplot(
+        x="coefficient",
+        y="feature_name",
+        data=coef_pd.head(30),
+        palette="PiYG"
+    )
+    plt.title("Top Lasso Logistic Regression Coefficients ")
+    plt.xlabel("Coefficient")
+    plt.ylabel("Feature")
+    plt.tight_layout()
+    plt.show()
+    
+
+
+
+-- output: bar plot, coefficient on x, feature name on y, title at top
