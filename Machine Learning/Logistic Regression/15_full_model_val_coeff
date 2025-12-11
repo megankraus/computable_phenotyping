@@ -1,0 +1,34 @@
+-- 15_full_model_val_coeff
+-- input: 14_full_model_al_get_names
+-- lang: python
+
+
+def 15_full_model_val_coeff(14_full_model_val_get_names):
+    full_model_val_get_names = 14_full_model_val_get_names
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    # Convert Spark DataFrame to Pandas
+    coef_pd = full_model_val_get_names.toPandas()
+
+    # Sort by absolute coefficient
+    coef_pd["abs_coef"] = coef_pd["coefficient"].abs()
+    coef_pd = coef_pd.sort_values("abs_coef", ascending=False)
+
+    # Plot top 30 features
+    plt.figure(figsize=(10,8))
+    sns.barplot(
+        x="coefficient",
+        y="feature_name",
+        data=coef_pd.head(30),
+        palette="vlag"
+    )
+    plt.title("Top 30 Logistic Regression Coefficients")
+    plt.xlabel("Coefficient")
+    plt.ylabel("Feature")
+    plt.tight_layout()
+    plt.show()
+
+
+-- Output: bar plot, coefficent on x, feature name on y, title on top 
