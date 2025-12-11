@@ -1,0 +1,30 @@
+-- 06_train_lasso_coeff
+-- input: 01_train_lasso_training_set
+-- lang: python 
+
+
+def 06_train_lasso_coeff(01_train_lasso_training_set):
+    train_lasso_training_set = 01_train_lasso_training_set
+    import json
+    import pandas as pd
+    from pyspark.sql import SparkSession
+
+    spark = SparkSession.builder.getOrCreate()
+
+    # Grab the row from your 1-row Spark DataFrame
+    row = train_lasso_training_set.limit(1).collect()[0]
+    coef_dict = json.loads(row["coef_json"])  # dict: feature -> coefficient
+    feature_cols = json.loads(row["feature_cols_json"])
+
+    # Convert to Pandas for plotting
+    coef_pd = pd.DataFrame({
+        "feature": feature_cols,
+        "coefficient": [coef_dict[f] for f in feature_cols]
+    })
+
+    return coef_pd
+
+
+
+-- output: feature, coefficient
+-- rows: number of features 
