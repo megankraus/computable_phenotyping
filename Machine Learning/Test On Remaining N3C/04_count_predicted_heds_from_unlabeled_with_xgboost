@@ -1,0 +1,13 @@
+-- 04_count_predicted_heds_from_unlabeled_with_xgboost
+-- input: 03_patient_predictions
+-- lang: sql 
+
+
+SELECT
+    COUNT(*) AS total_unlabeled_patients,
+    SUM(predicted_hEDS) AS predicted_hEDS_patients
+FROM patient_predictions
+
+
+
+-- output: total_unlabeled_patients, predicted_hEDS_patients
