@@ -1,0 +1,30 @@
+-- 11_plot_logreg_roc_val
+-- input: 09_apply_logistic_regression_to_validation
+-- lang: python
+
+
+def 11_plot_logreg_roc_val(09_apply_logistic_regression_to_validation):
+    apply_logistic_regression_to_validation = 09_apply_logistic_regression_to_validation
+    import matplotlib.pyplot as plt
+    from sklearn.metrics import roc_curve, auc
+
+    df = apply_logistic_regression_to_validation.toPandas()
+
+    plt.figure(figsize=(10,5))
+
+    for model in df['model_name'].unique():
+        model_df = df[df['model_name'] == model]
+        fpr, tpr, _ = roc_curve(model_df['cohort'], model_df['probability'])
+        roc_auc = auc(fpr, tpr)
+        plt.plot(fpr, tpr, color="red", label=f"{model} (AUC={roc_auc:.3f})")
+
+    plt.plot([0,1], [0,1], 'k--')
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title(" Logistic Regression Validation Set ROC Curves")
+    plt.legend()
+    plt.show()
+
+
+
+-- output: ROC curve, FPR on x, TPR on y, legend and Title shown 
