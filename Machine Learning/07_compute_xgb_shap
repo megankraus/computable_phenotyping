@@ -47,4 +47,4 @@ def 07_compute_xgb_shap(feature_matrix, 01_train_xgboost_training_set):
 
 
 -- output: feature (ID), mean_abs_shap
--- rows: number of patients in training set 
+-- rows: number in feature set
