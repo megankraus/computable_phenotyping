@@ -1,0 +1,21 @@
+-- 07_lasso_get_names
+-- input: 06_train_lasso_coeff, patient_feature_counts (see RB model) 
+-- lang: sql 
+
+
+-- Join feature importance with feature names, keeping only non-negative coefficients
+SELECT
+    s.feature,
+    f.feature_name,
+    s.coefficient
+FROM train_lasso_coeff AS s
+LEFT JOIN (
+    SELECT DISTINCT feature_id, feature_name
+    FROM patient_feature_counts
+) AS f
+    ON s.feature = f.feature_id
+WHERE s.coefficient != 0
+
+
+-- output: feature (ID), feature_name, coefficient
+-- rows: 46
