@@ -1,0 +1,58 @@
+-- 10_apply_xgboost_to_validation
+-- input: val_feature_matrix, 01_train_xgboost_training_set 
+-- lang: python 
+
+
+def 10_apply_xgboost_to_validation(val_feature_matrix, 01_train_xgboost_training_set):
+    train_xgboost_training_set = 01_train_xgboost_training_set
+    import json
+    import numpy as np
+    import pandas as pd
+    import xgboost as xgb
+    from pyspark.sql import SparkSession
+
+    spark = SparkSession.builder.getOrCreate()
+
+    # ---- Read back model + feature order ----
+    row = train_xgboost_training_set.limit(1).collect()[0]
+    model_json = row["model_json"]
+    feature_cols = json.loads(row["feature_cols_json"])
+
+    booster = xgb.Booster()
+    booster.load_model(bytearray(model_json.encode("utf-8")))
+
+    # ---- Validation data to pandas ----
+    vdf = val_feature_matrix.toPandas() if not isinstance(val_feature_matrix, pd.DataFrame) else val_feature_matrix
+
+    # Ensure cohort exists (for metrics later); if not, create dummy zeros
+    if "cohort" not in vdf.columns:
+        vdf["cohort"] = 0
+
+    # ---- Align columns to the training feature order ----
+    for col in feature_cols:
+        if col not in vdf.columns:
+            vdf[col] = 0.0
+    X_val = vdf[feature_cols]
+
+    # ---- Predict probabilities with Booster directly ----
+    dval = xgb.DMatrix(X_val, feature_names=feature_cols)
+    proba = booster.predict(dval)  # probability of positive class for binary:logistic
+
+    # ---- Predicted label at 0.5 threshold ----
+    pred = (proba >= 0.5).astype(int)
+
+    # ---- Build output Spark DF ----
+    out_pd = pd.DataFrame({
+        "person_id": vdf["person_id"],
+        "cohort": vdf["cohort"],
+        "probability": proba.astype(float),
+        "prediction": pred.astype(int)
+    })
+    out_pd["model_name"] = "xgboost"
+
+    return spark.createDataFrame(out_pd)
+
+
+
+-- output: person_id, cohort, probability, prediction, model_name
+-- rows: number of patients in validation set 
