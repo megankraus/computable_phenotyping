@@ -1,0 +1,39 @@
+-- 16_Val_xgboost_plot_shap
+-- input: 15_Val_xgboost_get_feature_names 
+-- lang: python 
+
+
+def 16_Val_xgboost_plot_shap(15_Val_xgboost_get_feature_names, top_n=30, yfontsize=14):
+    val_full_model_get_feature_names = 15_Val_xgboost_get_feature_names
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    # Convert Spark DataFrame to pandas
+    shap_df = val_full_model_get_feature_names.toPandas()
+
+
+    # Sort by mean_abs_shap descending and take top_n
+    shap_df = shap_df.sort_values('mean_abs_shap', ascending=False).head(top_n)
+
+    # Plot horizontal bar chart
+    plt.figure(figsize=(10, 8))
+    sns.barplot(
+        x='mean_abs_shap',
+        y='feature_name',
+        data=shap_df,
+        palette='viridis'
+    )
+    plt.xlabel("Mean |SHAP value|")
+    plt.ylabel("Feature")
+    plt.title(f"Validation Set: Top {top_n} Features by SHAP Importance")
+
+    # Increase y-axis font size
+    plt.yticks(fontsize=yfontsize)
+    
+    plt.tight_layout()
+    plt.show()
+
+
+
+-- output: figure. mean shap on x, feature name on y, title up top 
