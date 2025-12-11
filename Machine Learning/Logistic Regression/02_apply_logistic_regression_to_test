@@ -1,0 +1,49 @@
+-- 02_apply_logistic_regression_to_test 
+-- inputs: feature_matrix, 01_train_logistic_regression_training_set
+-- lang: python 
+
+
+def 02_apply_logistic_regression_to_test(feature_matrix, 01_train_logistic_regression_training_set):
+    train_logistic_regression_training_set = 01_train_logistic_regression_training_set
+    import pandas as pd
+    import numpy as np
+    from pyspark.sql import SparkSession
+    import json
+
+    spark = SparkSession.builder.getOrCreate()
+
+    # Retrieve serialized coefficients and feature order
+    row = train_logistic_regression_training_set.limit(1).collect()[0]
+    coef_dict = json.loads(row["coef_json"])  # now a dict: feature_name -> coefficient
+    feature_cols = json.loads(row["feature_cols_json"])  # ordered feature list
+
+    # Convert validation data to pandas
+    vdf = feature_matrix.toPandas() if not isinstance(feature_matrix, pd.DataFrame) else feature_matrix
+
+    # Ensure all features exist
+    for f in feature_cols:
+        if f not in vdf.columns:
+            vdf[f] = 0.0
+
+    # Vectorized prediction
+    coef_array = np.array([coef_dict[f] for f in feature_cols])
+    X_val_array = vdf[feature_cols].to_numpy()
+    linear_pred = X_val_array @ coef_array
+    proba = 1 / (1 + np.exp(-linear_pred))
+    pred = (proba >= 0.5).astype(int)
+
+    # Build Spark DataFrame
+    out_pd = pd.DataFrame({
+        "person_id": vdf["person_id"],
+        "cohort": vdf["cohort"],
+        "probability": proba.astype(float),
+        "prediction": pred.astype(int)
+    })
+    out_pd["model_name"] = "logistic_regression"
+
+    return spark.createDataFrame(out_pd)
+    return spark.createDataFrame(out_pd)
+
+
+-- output: person_id, cohort, probability, prediction, model_name
+-- rows: number of pats in training set 
